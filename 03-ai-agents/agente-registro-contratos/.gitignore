@@ -1,0 +1,22 @@
+# Dependencias y builds
+node_modules/
+web/node_modules/
+web/dist/
+dist/
+
+# Salidas de ejecución (se regeneran con demo.ts o el chat)
+out/*
+!out/.gitkeep
+
+# Secretos: cualquier .env salvo la plantilla sin valores
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Configuración local de herramientas
+.claude/settings.local.json
+
+*.log
+.DS_Store

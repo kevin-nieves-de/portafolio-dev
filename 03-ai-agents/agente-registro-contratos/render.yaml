@@ -1,0 +1,27 @@
+# Despliegue en Render (https://render.com) — un solo servicio web que sirve el front
+# construido y la API. Requiere conectar el repo en el dashboard de Render.
+#
+# Tras el primer deploy, define los secretos en el dashboard (Environment):
+#   LLM_PROVIDER   = gemini              (o anthropic)
+#   GEMINI_API_KEY = <tu clave>          (o ANTHROPIC_API_KEY)
+# Opcionales: GEMINI_MODEL, ANTHROPIC_MODEL, AGENT_MAX_ITERATIONS,
+#             AGENT_MAX_TOKENS_PER_SESSION, ACCESS_KEY.
+services:
+  - type: web
+    name: agente-registro-contratos
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false

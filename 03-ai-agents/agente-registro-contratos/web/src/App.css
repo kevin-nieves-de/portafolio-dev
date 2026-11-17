@@ -1,0 +1,258 @@
+:root {
+  --bg: #0f1115;
+  --panel: #171a21;
+  --borde: #2a2e38;
+  --texto: #e6e8ee;
+  --texto-tenue: #9aa1b1;
+  --acento: #5b8cff;
+  --ok: #35c48f;
+  --error: #ef5350;
+  --confirmacion: #f2a93b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--texto);
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.app__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--borde);
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.app__header h1 {
+  font-size: 1.15rem;
+  margin: 0;
+}
+
+.app__subtitulo {
+  margin: 0.15rem 0 0;
+  font-size: 0.8rem;
+  color: var(--texto-tenue);
+}
+
+.app__header-derecha {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.estado-salud {
+  font-size: 0.72rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--borde);
+  white-space: nowrap;
+}
+
+.estado-salud--ok {
+  color: var(--ok);
+  border-color: var(--ok);
+}
+
+.estado-salud--error {
+  color: var(--texto-tenue);
+}
+
+.clave-acceso {
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  color: var(--texto);
+  padding: 0.35rem 0.5rem;
+  font-size: 0.75rem;
+  width: 150px;
+}
+
+.chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.mensaje {
+  display: flex;
+  flex-direction: column;
+  max-width: 80%;
+}
+
+.mensaje--user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.mensaje--assistant,
+.mensaje--system {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.burbuja {
+  padding: 0.6rem 0.85rem;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  white-space: pre-wrap;
+  line-height: 1.4;
+  font-size: 0.92rem;
+}
+
+.mensaje--user .burbuja {
+  background: var(--acento);
+  border-color: var(--acento);
+  color: #fff;
+}
+
+.burbuja--error {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.burbuja--pensando {
+  color: var(--texto-tenue);
+  font-style: italic;
+}
+
+.mensaje--confirmacion .burbuja {
+  border-color: var(--confirmacion);
+  box-shadow: 0 0 0 1px var(--confirmacion);
+}
+
+.badge-confirmacion {
+  font-size: 0.72rem;
+  color: var(--confirmacion);
+  margin-bottom: 0.3rem;
+  font-weight: 600;
+}
+
+.tool-calls {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.tool-call {
+  border: 1px solid var(--borde);
+  border-left-width: 3px;
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  background: #12141a;
+  font-size: 0.78rem;
+}
+
+.tool-call--ok {
+  border-left-color: var(--ok);
+}
+
+.tool-call--error {
+  border-left-color: var(--error);
+}
+
+.tool-call__cabecera {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  font-weight: 600;
+}
+
+.tool-call__icono {
+  font-size: 0.85rem;
+}
+
+.tool-call__args {
+  color: var(--texto-tenue);
+  font-family: ui-monospace, monospace;
+  margin-top: 0.2rem;
+  word-break: break-all;
+}
+
+.tool-call__resumen {
+  margin-top: 0.25rem;
+  color: var(--texto);
+}
+
+.app__footer {
+  display: flex;
+  gap: 0.6rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--borde);
+}
+
+.entrada {
+  flex: 1;
+  resize: none;
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  color: var(--texto);
+  padding: 0.6rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.92rem;
+}
+
+.entrada:focus {
+  outline: 2px solid var(--acento);
+}
+
+.boton-enviar {
+  background: var(--acento);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0 1.1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.boton-enviar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f5f6f9;
+    --panel: #ffffff;
+    --borde: #dfe2ea;
+    --texto: #1c1f27;
+    --texto-tenue: #6b7280;
+  }
+
+  .tool-call {
+    background: #f9fafb;
+  }
+}
