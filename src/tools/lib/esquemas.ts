@@ -31,8 +31,10 @@ function campo<T extends z.ZodTypeAny>(valor: T, descripcion: string) {
  */
 export const contratoSchema = z.object({
   tipo_documento: z
-    .enum(["contrato", "otrosi"])
-    .describe('"otrosi" si el documento modifica un contrato existente; sus campos no mencionados quedan en null'),
+    .enum(["contrato", "otrosi", "otro"])
+    .describe(
+      '"otrosi" si modifica un contrato existente (sus campos no mencionados quedan en null); "otro" si no es un contrato (cotización, pregunta)',
+    ),
   id_contrato: campo(z.string().min(1), "Número del contrato tal como aparece (en un otrosí, el del contrato que modifica)"),
   cliente: campo(z.string().min(1), "Razón social de la contraparte (EL CONTRATANTE), nunca Periferia"),
   nit_cliente: campo(z.string().regex(/^\d+$/), "Identificador tributario del cliente sin puntos ni dígito de verificación"),
@@ -45,6 +47,9 @@ export const contratoSchema = z.object({
   fecha_fin: campo(fechaIsoSchema, "Fecha de fin YYYY-MM-DD, puede venir de un plazo en meses"),
   requiere_poliza: campo(z.boolean(), "Si el contrato exige constituir póliza"),
   tipo_poliza: campo(z.string(), 'Tipos de póliza separados por ";" (ej. "cumplimiento;calidad"), vacío si no aplica'),
+  observaciones: z
+    .array(z.string())
+    .describe("Notas de la extracción que explican confianzas bajas o valores derivados; no se registran en el maestro"),
 })
 export type Contrato = z.infer<typeof contratoSchema>
 
@@ -116,6 +121,10 @@ export interface EntradaHistorial {
   accion: "insercion" | "actualizacion"
   cambios: Record<string, { antes: unknown; despues: unknown }>
   mensaje_id: string
+  /** Fecha (YYYY-MM-DD) en que el documento llegó al buzón; `ts` es cuándo se procesó. */
+  fecha_recepcion: string
+  /** Campos que estaban en revisión y el humano confirmó (`confirmado = true`). Auditoría de RN5. */
+  confirmados_por_humano: string[]
 }
 
 /** Entrada de out/procesados.json: el mensaje ya no aparece en `leer_buzon` (HU-1). */

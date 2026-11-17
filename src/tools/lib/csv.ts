@@ -45,7 +45,18 @@ export function parsearCsv(contenido: string): string[][] {
   return filas.filter((f) => !(f.length === 1 && f[0] === ""))
 }
 
-function escaparCampo(valor: string): string {
+/**
+ * Inyección CSV (OWASP): el maestro se abre en Excel y `cliente`/`objeto` vienen de documentos
+ * externos. Una celda que empieza con = + - @ (o tab/CR) se ejecutaría como fórmula; se le antepone
+ * un apóstrofo para que Excel la muestre como texto. Ningún valor legítimo del maestro empieza así
+ * (los montos son no negativos y las fechas empiezan con el año).
+ */
+function neutralizarFormula(valor: string): string {
+  return /^[=+\-@\t\r]/.test(valor) ? `'${valor}` : valor
+}
+
+function escaparCampo(crudo: string): string {
+  const valor = neutralizarFormula(crudo)
   return /[",\r\n]/.test(valor) ? `"${valor.replace(/"/g, '""')}"` : valor
 }
 

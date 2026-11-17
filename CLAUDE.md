@@ -20,22 +20,25 @@ Código, identificadores, comentarios y docs **en español** (`leerMaestro`, `re
 
 ## Estado
 
-- Hecho: plataforma copiada y adaptada (paso 1) y helpers deterministas de `src/tools/lib/` (paso 2).
-- Pendiente: las 5 herramientas en `src/tools/contratos.ts` (hoy es un stub vacío), `demo.ts`,
-  `agent/prompt.md`, `src/knowledge/registro-contratos.md`, `README.md`, `SOLUCION.md` (11 secciones,
-  incluida la regla de gobierno §7.5), `modulo/`.
+- Hecho: plataforma (paso 1), helpers de `src/tools/lib/` (paso 2), las 5 herramientas P0 y
+  `demo.ts` (paso 3). La demo reproduce la tabla §7.4 del PRD para los 6 mensajes.
+- Pendiente: `agent/prompt.md`, `src/knowledge/registro-contratos.md` (sin ellos el chat falla al
+  primer turno), ajustes del front, `README.md`, `SOLUCION.md` (11 secciones, incluida la regla de
+  gobierno §7.5), despliegue, `modulo/`. `contratos_leer_pdf` (P1) no está implementada.
 
 ## Comandos
 
 ```bash
 npm install && npm install --prefix web
 npm run typecheck        # tsc --noEmit sobre src/, demo.ts y scripts/ (no incluye web/)
-npm run demo             # demo.ts: herramientas sin LLM (pendiente de escribir)
+npm run demo             # demo.ts: las 5 herramientas sobre el buzón, sin LLM; borra out/ al inicio
 npm run dev              # backend :3002 + front :5174
 npm run sync:modulo      # regenera modulo/agent.md y SKILL.md desde prompt.md y knowledge/
 ```
 
-No hay framework de test: la verificación es `typecheck` + `demo`.
+No hay framework de test: la verificación es `typecheck` + `demo`. `demo.ts` invoca las
+herramientas por el mismo registro y la misma validación zod que `loop.ts`, e imprime `ok`/`x`;
+un `x` es una regresión. Incluye los casos de error de HU-6 y la prueba de CA2 (sección 6).
 
 ## Git y seguridad (criterio eliminatorio del reto)
 
@@ -71,6 +74,26 @@ reiniciar al editarlos), **ejecución** en `src/tools/`.
 - Estado en disco: `out/sharepoint/maestro-contratos.csv` (copia del fixture, RN6, vía
   `inicializarMaestro`), `out/sharepoint/historial.jsonl`, `out/sharepoint/Contratos/<año>/<slug>/`,
   `out/procesados.json`, `out/alertas.md`. `fixtures/` es de solo lectura.
+
+## Decisiones de diseño de las herramientas (no obvias desde un solo archivo)
+
+- **Las herramientas no confían en el modelo.** `validar` y `registrar` llaman a `evaluarContrato`
+  (`lib/validacion.ts`), que relee el buzón y **reextrae** el documento: todo valor del `contrato`
+  recibido que difiera de la extracción entra a `requiere_revision` (CA2). `registrar` revalida
+  desde cero, no usa un `validar` previo.
+- Quién cierra cada mensaje en `procesados.json`: `leer_buzon` los que no traen contrato (HU-1),
+  `validar` los `duplicado`/`rechazado` (terminales, nada que escribir), `registrar` los demás.
+  `registrar` sobre un mensaje ya procesado falla (idempotencia).
+- RN1 compara solo `valor`, `fecha_inicio`, `fecha_fin`. En una actualización no se sobrescriben
+  `cliente` ni `objeto` (el maestro guarda la redacción canónica); `nit_cliente`/`pais` distintos
+  son conflicto. Un otrosí que extiende `fecha_fin` pasa la póliza `vigente` a `pendiente`.
+- `fecha_registro` = fecha del correo, y el historial guarda `fecha_recepcion`: así `alertas` no
+  depende del reloj y la demo es determinista salvo `ts`.
+- Escala de confianza documentada en `lib/extraccion.ts`. msg-006 deja en revisión `valor`,
+  `fecha_inicio` y `fecha_fin` (el PRD solo nombra valor y fecha_fin; `fecha_inicio` también es
+  supuesta porque la firma no trae día). La propuesta `2026-09-01..2027-08-31` sale de tomar el
+  envío del correo como cota de la firma y contar desde el día siguiente.
+- `csv.ts` neutraliza inyección de fórmulas (celdas que empiezan con `= + - @`).
 
 ## Trampas de los fixtures (`fixtures/reto-02/`)
 

@@ -33,9 +33,13 @@ export function truncar(texto: string, max: number): string {
   return (ultimoEspacio > max / 2 ? corte.slice(0, ultimoEspacio) : corte).replace(/[\s,.;:]+$/, "") + "…"
 }
 
-/** "INDUSTRIAS DELTA S.A.S." -> "Industrias Delta S.A.S.": capitaliza palabras, respeta siglas con puntos y conectores. */
+/**
+ * "INDUSTRIAS DELTA S.A.S." -> "Industrias Delta S.A.S.": capitaliza palabras, respeta siglas con
+ * puntos y deja en minúscula solo las preposiciones y conjunciones. Los artículos sí van en
+ * mayúscula porque suelen ser parte del nombre propio ("Minera Los Andes", "Universidad del Valle").
+ */
 export function capitalizarRazonSocial(texto: string): string {
-  const CONECTORES = new Set(["de", "del", "la", "las", "los", "el", "y", "e"])
+  const CONECTORES = new Set(["de", "del", "y", "e"])
   return texto
     .trim()
     .toLowerCase()
