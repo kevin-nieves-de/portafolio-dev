@@ -25,9 +25,9 @@ Código, identificadores, comentarios y docs **en español** (`leerMaestro`, `re
 ## Estado
 
 - Hecho: plataforma (paso 1), helpers de `src/tools/lib/` (paso 2), las 5 herramientas P0 y
-  `demo.ts` (paso 3). La demo reproduce la tabla §7.4 del PRD para los 6 mensajes.
-- Pendiente: `agent/prompt.md`, `src/knowledge/registro-contratos.md` (sin ellos el chat falla al
-  primer turno), ajustes del front, `README.md`, `SOLUCION.md` (11 secciones, incluida la regla de
+  `demo.ts` (paso 3), `agent/prompt.md` y `src/knowledge/registro-contratos.md` (paso 4). La demo
+  reproduce la tabla §7.4 del PRD para los 6 mensajes.
+- Pendiente: ajustes del front, `README.md`, `SOLUCION.md` (11 secciones, incluida la regla de
   gobierno §7.5), despliegue, `modulo/`. `contratos_leer_pdf` (P1) no está implementada.
 
 ## Comandos
