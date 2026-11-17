@@ -1,5 +1,6 @@
 # Despliegue en Render (https://render.com) — un solo servicio web que sirve el front
-# construido y la API. Requiere conectar el repo en el dashboard de Render.
+# construido y la API. Requiere conectar el repo en el dashboard de Render. El proyecto vive en
+# una subcarpeta del portafolio: rootDir hace que build, start y el auto-deploy se limiten a ella.
 #
 # Tras el primer deploy, define los secretos en el dashboard (Environment):
 #   LLM_PROVIDER   = gemini              (o anthropic)
@@ -10,6 +11,7 @@ services:
   - type: web
     name: agente-registro-contratos
     runtime: node
+    rootDir: 03-ai-agents/agente-registro-contratos
     plan: free
     buildCommand: npm install && npm run build
     startCommand: npm start

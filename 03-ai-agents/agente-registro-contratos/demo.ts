@@ -5,7 +5,7 @@
  *
  *   npm run demo
  *
- * Determinista salvo timestamps: borra out/ al inicio.
+ * Determinista salvo timestamps: vacía out/ al inicio (conserva out/.gitkeep).
  */
 import { promises as fs } from "node:fs"
 import path from "node:path"
@@ -92,8 +92,17 @@ async function procesarMensaje(mensaje: MensajeBuzon, pendientes: Map<string, Co
   }
 }
 
+/** Vacía out/ para que la demo sea determinista, sin borrar out/.gitkeep (que está versionado). */
+async function limpiarSalidas(): Promise<void> {
+  const out = path.join(ROOT, "out")
+  await fs.mkdir(out, { recursive: true })
+  for (const entrada of await fs.readdir(out)) {
+    if (entrada !== ".gitkeep") await fs.rm(path.join(out, entrada), { recursive: true, force: true })
+  }
+}
+
 async function main(): Promise<void> {
-  await fs.rm(path.join(ROOT, "out"), { recursive: true, force: true })
+  await limpiarSalidas()
 
   linea("=== 1. Buzón pendiente ===")
   const buzon = await invocar<{ mensajes: MensajeBuzon[] }>("contratos_leer_buzon", {})

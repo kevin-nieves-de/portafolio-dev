@@ -7,14 +7,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Reto técnico 02 de Periferia (Perxia 2.0): agente conversacional que actúa como **punto único
 de recepción de contratos**. Lee un buzón simulado, extrae los datos de cada contrato, clasifica
 (nuevo / actualización / duplicado / rechazado), archiva en un SharePoint simulado, alimenta el
-maestro CSV y genera alertas de vencimiento y pólizas. El PRD autoritativo es
-`PRD-02-agente-registro-contratos.md`.
+maestro CSV y genera alertas de vencimiento y pólizas.
 
-Es **independiente** del reto 01 (`../Reto_IA`): la plataforma (adaptador LLM, ciclo del agente,
-servidor, front) se copió de allá, no se importa ni se enlaza. Un cambio aquí no debe tocar
-`../Reto_IA` ni al revés. Corre en puertos distintos (backend :3002, front :5174) para que los dos
-puedan levantarse a la vez. A diferencia del reto 01, este proyecto **sí usa Git** (el §9.5 del PRD
-acepta repo con historial, y permite desplegar en Render).
+**El PRD no se versiona**: es un documento del proceso de selección y este repo es público. La
+copia local vive en `PRD-02-agente-registro-contratos.md` junto a este archivo (ignorada por
+`.gitignore`); si no está, pídesela al usuario. Nunca la agregues al repo ni cites su texto largo
+en README, SOLUCION.md ni commits.
+
+Este proyecto vive en el portafolio público del usuario (`portafolio-dev`), carpeta
+`03-ai-agents/agente-registro-contratos/`; la raíz del repo Git está dos niveles arriba. Es
+**independiente** del reto 01, un proyecto local fuera de este repo: la plataforma (adaptador LLM,
+ciclo del agente, servidor, front) se copió de allá, no se importa ni se enlaza. Corre en puertos
+distintos (backend :3002, front :5174) para que los dos puedan levantarse a la vez.
 
 Código, identificadores, comentarios y docs **en español** (`leerMaestro`, `requiere_revision`).
 
@@ -42,8 +46,10 @@ un `x` es una regresión. Incluye los casos de error de HU-6 y la prueba de CA2 
 
 ## Git y seguridad (criterio eliminatorio del reto)
 
-Cada paso terminado se reporta con un commit. Una falla de seguridad descalifica, así que antes
-de cada commit:
+Cada paso terminado se reporta con un commit, con prefijo convencional como el resto del
+portafolio (`feat:`, `fix:`, `docs:`, `chore:`) y mensaje en español. Nada de commits que toquen
+otras carpetas del portafolio salvo `03-ai-agents/README.md`. Una falla de seguridad descalifica,
+así que antes de cada commit:
 
 - `git add -A --dry-run` y revisar que no entren `.env*` (salvo `.env.example`, que va con las
   claves **vacías**), `out/`, `node_modules/` ni llaves. El `.gitignore` ya los cubre.

@@ -17,6 +17,10 @@ out/*
 
 # Configuración local de herramientas
 .claude/settings.local.json
+CLAUDE.local.md
+
+# Documento del proceso de selección: solo local, el repo es público
+PRD-*.md
 
 *.log
 .DS_Store
