@@ -22,6 +22,13 @@ const MAX_TOKENS_TOTAL = Number(process.env.AGENT_MAX_TOKENS_TOTAL ?? 10_000_000
 const MAX_SESIONES = Number(process.env.AGENT_MAX_SESSIONS ?? 100)
 const ACCESS_KEY = process.env.ACCESS_KEY || null
 const TIMEOUT_LLM_MS = Number(process.env.AGENT_LLM_TIMEOUT_MS ?? 120_000)
+/**
+ * Con el link público, varias personas comparten el servidor: si todas escribieran en el mismo
+ * out/, quien procese el buzón primero se lo "consumiría" a los demás. Aislado, cada sesión trabaja
+ * en out/sesiones/<sessionId>/ con su propio maestro, historial y log, y fixtures/ enlazado (solo
+ * lectura). En local queda apagado para que las rutas coincidan con el PRD (out/log.jsonl, etc.).
+ */
+const SESIONES_AISLADAS = process.env.AGENT_SESIONES_AISLADAS === "true"
 
 interface Sesion {
   historial: Mensaje[]
@@ -60,12 +67,33 @@ function obtenerSesion(sessionId: string): Sesion {
     // Las sesiones viven en memoria: al llegar al tope se descarta la más antigua que esté libre.
     if (sesiones.size >= MAX_SESIONES) {
       const libre = [...sesiones.entries()].find(([, s]) => !s.ocupada)
-      if (libre) sesiones.delete(libre[0])
+      if (libre) {
+        sesiones.delete(libre[0])
+        if (SESIONES_AISLADAS) void fs.rm(carpetaDeSesion(libre[0]), { recursive: true, force: true })
+      }
     }
     sesion = { historial: [], tokensUsados: 0, creada: new Date().toISOString(), ocupada: false }
     sesiones.set(sessionId, sesion)
   }
   return sesion
+}
+
+/** El sessionId ya pasó por `sessionIdSchema` ([A-Za-z0-9_-]), así que es un segmento de ruta seguro. */
+function carpetaDeSesion(sessionId: string): string {
+  return path.join(PROJECT_ROOT, "out", "sesiones", sessionId)
+}
+
+/** Raíz que reciben las herramientas como `ctx.directory`. */
+async function directorioDeTrabajo(sessionId: string): Promise<string> {
+  if (!SESIONES_AISLADAS) return PROJECT_ROOT
+  const carpeta = carpetaDeSesion(sessionId)
+  const enlace = path.join(carpeta, "fixtures")
+  if (!existsSync(enlace)) {
+    await fs.mkdir(carpeta, { recursive: true })
+    // "junction" hace que el enlace a un directorio funcione también en Windows sin permisos de admin.
+    await fs.symlink(path.join(PROJECT_ROOT, "fixtures"), enlace, "junction")
+  }
+  return carpeta
 }
 
 /** Compara en tiempo constante (sobre hashes de igual largo) para no filtrar la clave por tiempos. */
@@ -150,7 +178,7 @@ app.post("/api/chat", async (req, res) => {
     const systemPrompt = await obtenerSystemPrompt()
 
     const resultado = await ejecutarTurno(sesion.historial, message, {
-      directory: PROJECT_ROOT,
+      directory: await directorioDeTrabajo(sessionId),
       sessionId,
       adaptador,
       systemPrompt,

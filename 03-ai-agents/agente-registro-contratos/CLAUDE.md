@@ -28,8 +28,8 @@ Código, identificadores, comentarios y docs **en español** (`leerMaestro`, `re
   `demo.ts` (paso 3), `agent/prompt.md` y `src/knowledge/registro-contratos.md` (paso 4), front y
   endurecimiento del servidor (paso 5), `modulo/` (paso 8). La demo reproduce la tabla §7.4 del
   PRD para los 6 mensajes.
-- Pendiente: `README.md`, `SOLUCION.md` (11 secciones, incluida la regla de gobierno §7.5),
-  despliegue. `contratos_leer_pdf` (P1) no se implementa a propósito.
+- Pendiente: `README.md`, `SOLUCION.md` (11 secciones, incluida la regla de gobierno §7.5).
+  `render.yaml` está listo; el deploy lo hace el usuario desde su cuenta de Render. `contratos_leer_pdf` (P1) no se implementa a propósito.
 
 ## Comandos
 
@@ -91,7 +91,10 @@ reiniciar al editarlos), **ejecución** en `src/tools/`.
   por eso el tope por sesión es 1M y hay un tope global (`AGENT_MAX_TOKENS_TOTAL`). Una sesión
   atiende un turno a la vez (`ocupada`). Sin CORS (mismo origen), cabeceras de seguridad con CSP
   estricta (`style-src 'self'`: nada de estilos inline en el front) y `ACCESS_KEY` comparada en
-  tiempo constante.
+  tiempo constante. Con `AGENT_SESIONES_AISLADAS=true` (activado en `render.yaml`) cada sesión
+  recibe como `ctx.directory` la carpeta `out/sesiones/<sessionId>/` con `fixtures/` enlazado
+  (junction): las herramientas no cambian y cada visitante del link tiene su propio buzón. En
+  local queda apagado para que las rutas sean las del PRD.
 - Adaptador Anthropic: API beta solo por `fallbacks: "default"` (reintento en otro modelo si el
   clasificador declina), `cache_control` automático y modelo por defecto `claude-opus-5-5`. Nunca
   reenvía bloques `thinking` (los descarta todos de forma consistente, así no choca con la
