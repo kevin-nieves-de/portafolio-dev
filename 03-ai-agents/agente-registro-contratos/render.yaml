@@ -21,15 +21,17 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
+      # El link público usa el plan gratuito de Gemini (costo cero). El adaptador reintenta ante el
+      # límite por minuto (429). Para usar Anthropic: LLM_PROVIDER=anthropic + ANTHROPIC_API_KEY.
       - key: LLM_PROVIDER
-        value: anthropic
+        value: gemini
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: GEMINI_API_KEY
+        sync: false
       - key: ANTHROPIC_MODEL
         value: claude-opus-5-5
       - key: ANTHROPIC_API_KEY
-        sync: false
-      # Alternativa: LLM_PROVIDER=gemini + GEMINI_API_KEY (el free tier de Gemini limita las
-      # solicitudes por minuto y un turno de buzón encadena ~20 llamadas).
-      - key: GEMINI_API_KEY
         sync: false
       # Link público: cada visitante procesa su propio buzón sin consumírselo a los demás.
       - key: AGENT_SESIONES_AISLADAS

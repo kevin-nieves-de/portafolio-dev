@@ -45,17 +45,7 @@ export class AdaptadorGemini implements AdaptadorLLM {
       cuerpo.toolConfig = { functionCallingConfig: { mode: "AUTO" } }
     }
 
-    const respuesta = await fetch(`${URL_BASE}/models/${this.modelo}:generateContent`, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": this.apiKey },
-      body: JSON.stringify(cuerpo),
-    })
-
-    if (!respuesta.ok) {
-      const detalle = await respuesta.text()
-      throw new Error(`${respuesta.status} ${detalle}`)
-    }
-
+    const respuesta = await this.solicitar(cuerpo)
     const datos = (await respuesta.json()) as RespuestaGenerateContent
     const candidato = datos.candidates?.[0]
     if (!candidato?.content?.parts) {
@@ -96,6 +86,48 @@ export class AdaptadorGemini implements AdaptadorLLM {
       },
     }
   }
+
+  /**
+   * El plan gratuito limita las solicitudes por minuto y un turno de buzón encadena ~20 llamadas.
+   * Ante 429 (cuota) o 503 (saturado) espera lo que sugiere Google (`retryDelay`) y reintenta.
+   * Las esperas están acotadas para caber dentro del timeout por llamada del ciclo (120 s); si la
+   * espera sugerida es mayor (p. ej. cuota diaria agotada) falla de una vez con un mensaje claro.
+   */
+  private async solicitar(cuerpo: Record<string, unknown>): Promise<Response> {
+    for (let intento = 0; ; intento++) {
+      const respuesta = await fetch(`${URL_BASE}/models/${this.modelo}:generateContent`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-goog-api-key": this.apiKey },
+        body: JSON.stringify(cuerpo),
+      })
+      if (respuesta.ok) return respuesta
+
+      const detalle = await respuesta.text()
+      const reintentable = respuesta.status === 429 || respuesta.status === 503
+      const espera = esperaSugeridaMs(detalle, intento)
+      if (!reintentable || intento >= MAX_REINTENTOS || espera > ESPERA_MAXIMA_MS) {
+        throw new Error(mensajeDeError(respuesta.status, detalle))
+      }
+      await new Promise((resolver) => setTimeout(resolver, espera))
+    }
+  }
+}
+
+const MAX_REINTENTOS = 3
+const ESPERA_MAXIMA_MS = 30_000
+
+/** Usa el `retryDelay` que devuelve Google ("17s"); si no viene, espera 5 s, 10 s, 20 s. */
+function esperaSugeridaMs(detalle: string, intento: number): number {
+  const sugerida = /"retryDelay"\s*:\s*"(\d+(?:\.\d+)?)s"/.exec(detalle)?.[1]
+  return sugerida !== undefined ? Math.ceil(Number(sugerida) * 1000) + 500 : 5_000 * 2 ** intento
+}
+
+function mensajeDeError(estado: number, detalle: string): string {
+  if (estado === 429) {
+    return "Gemini alcanzó el límite de solicitudes de su plan gratuito (429). Espera un minuto y pídeme que continúe; si persiste, la cuota diaria se agotó"
+  }
+  if (estado === 503) return "Gemini está saturado en este momento (503). Intenta de nuevo en un minuto"
+  return `Gemini respondió ${estado}: ${detalle.slice(0, 300)}`
 }
 
 interface ParteGemini {

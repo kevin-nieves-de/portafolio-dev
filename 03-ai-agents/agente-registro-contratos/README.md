@@ -132,12 +132,15 @@ demo.ts                              herramientas sin modelo
 ## Despliegue
 
 `render.yaml` define un único servicio web en Render (plan free) que construye el front y sirve
-front y API desde la misma URL.
+front y API desde la misma URL. El link público usa el **plan gratuito de Gemini**
+(`gemini-2.5-flash`), así que no tiene costo. Ese plan limita las solicitudes por minuto: el
+adaptador espera y reintenta, por lo que procesar el buzón completo puede tardar un par de
+minutos. Para usar Anthropic, cambia `LLM_PROVIDER` a `anthropic` y carga `ANTHROPIC_API_KEY`.
 
 1. En Render: **New → Blueprint** y conecta el repositorio `portafolio-dev` (rama `main`).
    `rootDir` limita el build y el auto-deploy a esta carpeta.
-2. Render pide los valores marcados como secretos: carga `ANTHROPIC_API_KEY` ahí, nunca en el
-   repositorio. `ACCESS_KEY` puede quedar vacía.
+2. Render pide los valores marcados como secretos: carga `GEMINI_API_KEY` ahí, nunca en el
+   repositorio. `ANTHROPIC_API_KEY` y `ACCESS_KEY` pueden quedar vacías.
 3. Al terminar el build, el link queda en `https://<nombre-del-servicio>.onrender.com`.
    `GET /api/health` confirma proveedor y modelo.
 

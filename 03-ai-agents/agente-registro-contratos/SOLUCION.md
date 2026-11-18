@@ -125,8 +125,14 @@ En total, **entre USD 0,25 y 0,40 por buzón de 6 mensajes, unos USD 0,05 a 0,07
 procesado**. Confirmar un contrato en revisión es un turno corto: unos centavos.
 
 Es una estimación sin medir en producción: la parte más incierta son los tokens de razonamiento.
-Se valida con el `usage` de cada respuesta. Con Gemini 2.5 Flash el costo es menor, pero el free
-tier limita las solicitudes por minuto y un turno de buzón no cabe en ese límite.
+Se valida con el `usage` de cada respuesta.
+
+**El link público usa Gemini (`gemini-2.5-flash`) en su plan gratuito**, para que la demo no tenga
+costo. Ese plan limita las solicitudes por minuto y por día. Ante un 429, el adaptador espera el
+`retryDelay` que indica Google y reintenta hasta 3 veces dentro del timeout por llamada. Si la cuota
+diaria se agota, lo dice en el chat en lugar de fallar en silencio. El costo es cero, a cambio de
+turnos más lentos y de un modelo menos estricto siguiendo instrucciones largas. Para producción
+recomiendo Anthropic; cambiar de uno a otro es solo una variable de entorno.
 
 ## 5. Estrategia de extracción
 

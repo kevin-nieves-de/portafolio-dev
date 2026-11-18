@@ -101,6 +101,9 @@ reiniciar al editarlos), **ejecución** en `src/tools/`.
   clasificador declina), `cache_control` automático y modelo por defecto `claude-opus-5-5`. Nunca
   reenvía bloques `thinking` (los descarta todos de forma consistente, así no choca con la
   verificación de historial editado).
+- Adaptador Gemini: el link público usa el plan gratuito (`render.yaml` con `LLM_PROVIDER=gemini`).
+  Ante 429/503 reintenta hasta 3 veces con el `retryDelay` de Google (esperas ≤ 30 s, para caber en
+  el timeout por llamada); si la espera sugerida es mayor (cuota diaria), falla con mensaje claro.
 - Front: `web/src/Markdown.tsx` renderiza el Markdown del agente como elementos React (nunca
   `dangerouslySetInnerHTML`): el texto puede citar correos de terceros.
 
