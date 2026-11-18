@@ -24,4 +24,5 @@ export interface RespuestaHealth {
   ok: boolean
   provider: string
   model: string
+  accessKeyRequired: boolean
 }

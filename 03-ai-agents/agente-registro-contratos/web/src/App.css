@@ -125,7 +125,8 @@ body {
   background: var(--panel);
   border: 1px solid var(--borde);
   white-space: pre-wrap;
-  line-height: 1.4;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
   font-size: 0.92rem;
 }
 
@@ -193,11 +194,29 @@ body {
   font-size: 0.85rem;
 }
 
-.tool-call__args {
+.tool-calls__titulo {
+  font-size: 0.72rem;
+  color: var(--texto-tenue);
+}
+
+.tool-call__clave {
+  font-weight: 400;
   color: var(--texto-tenue);
   font-family: ui-monospace, monospace;
-  margin-top: 0.2rem;
-  word-break: break-all;
+}
+
+.tool-call__detalle summary {
+  margin-top: 0.25rem;
+  color: var(--texto-tenue);
+  cursor: pointer;
+}
+
+.tool-call__detalle pre {
+  max-height: 16rem;
+  overflow: auto;
+  margin: 0.3rem 0 0;
+  font-size: 0.72rem;
+  color: var(--texto-tenue);
 }
 
 .tool-call__resumen {
@@ -207,9 +226,41 @@ body {
 
 .app__footer {
   display: flex;
-  gap: 0.6rem;
-  padding: 1rem 1.25rem;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem 1rem;
   border-top: 1px solid var(--borde);
+}
+
+.app__entrada {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.ejemplos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.ejemplo {
+  background: transparent;
+  color: var(--texto-tenue);
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.ejemplo:hover:not(:disabled) {
+  color: var(--texto);
+  border-color: var(--acento);
+}
+
+.ejemplo:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .entrada {
@@ -241,6 +292,74 @@ body {
 .boton-enviar:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.markdown {
+  white-space: normal;
+}
+
+.markdown > :first-child {
+  margin-top: 0;
+}
+
+.markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown p {
+  margin: 0.45rem 0;
+  white-space: pre-wrap;
+}
+
+.markdown__titulo {
+  font-weight: 700;
+}
+
+.markdown ul,
+.markdown ol {
+  margin: 0.45rem 0;
+  padding-left: 1.3rem;
+}
+
+.markdown code,
+.markdown pre {
+  font-family: ui-monospace, monospace;
+  font-size: 0.82rem;
+}
+
+.markdown pre {
+  overflow-x: auto;
+  padding: 0.5rem;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+}
+
+.markdown__tabla {
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+
+.markdown table {
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.markdown th,
+.markdown td {
+  border: 1px solid var(--borde);
+  padding: 0.3rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown th {
+  background: var(--bg);
+}
+
+@media (max-width: 600px) {
+  .mensaje {
+    max-width: 100%;
+  }
 }
 
 @media (prefers-color-scheme: light) {

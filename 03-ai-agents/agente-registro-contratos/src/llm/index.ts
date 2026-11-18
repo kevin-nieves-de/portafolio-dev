@@ -11,7 +11,7 @@ export function crearAdaptadorLLM(): AdaptadorLLM {
     if (!apiKey) {
       throw new Error("Falta la variable de entorno ANTHROPIC_API_KEY")
     }
-    const modelo = process.env.ANTHROPIC_MODEL ?? "claude-opus-5"
+    const modelo = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5"
     return new AdaptadorAnthropic(apiKey, modelo)
   }
 

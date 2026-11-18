@@ -24,6 +24,8 @@ export interface OpcionesTurno {
   systemPrompt: string
   herramientas: HerramientaRegistrada[]
   maxIteraciones: number
+  /** Tope por llamada al modelo (no por turno: un turno de buzón encadena ~20 llamadas). */
+  timeoutLlmMs: number
 }
 
 /**
@@ -44,7 +46,25 @@ export async function ejecutarTurno(historial: Mensaje[], mensajeUsuario: string
   let tokensConsumidos = 0
 
   for (let iteracion = 0; iteracion < opciones.maxIteraciones; iteracion++) {
-    const respuesta = await opciones.adaptador.enviar(historial, opciones.systemPrompt, herramientasLLM)
+    let respuesta: RespuestaLLM
+    try {
+      respuesta = await conTimeout(
+        opciones.adaptador.enviar(historial, opciones.systemPrompt, herramientasLLM),
+        opciones.timeoutLlmMs,
+        `el proveedor de modelo de lenguaje no respondió en ${Math.round(opciones.timeoutLlmMs / 1000)} s`,
+      )
+    } catch (err) {
+      // CA5: el error del proveedor llega al chat junto con lo que alcanzó a ejecutarse en el turno,
+      // para que la analista sepa qué quedó registrado antes del corte.
+      const motivo = err instanceof Error ? err.message : "error desconocido del proveedor"
+      const hecho = toolCalls.length > 0 ? ` Antes del corte se ejecutaron ${toolCalls.length} llamadas a herramientas (ver abajo).` : ""
+      return {
+        reply: `No pude completar la solicitud: ${motivo}.${hecho} La sesión sigue activa; puedes pedirme que continúe.`,
+        toolCalls,
+        needsConfirmation: false,
+        tokensConsumidos,
+      }
+    }
     ultimaRespuesta = respuesta
     tokensConsumidos += respuesta.uso.tokensEntrada + respuesta.uso.tokensSalida
 
@@ -147,4 +167,12 @@ function resumenCompacto(data: unknown): string {
 function detectarPreguntaDeConfirmacion(texto: string | null): boolean {
   if (!texto) return false
   return texto.trim().endsWith("?")
+}
+
+function conTimeout<T>(promesa: Promise<T>, ms: number, mensaje: string): Promise<T> {
+  let temporizador: NodeJS.Timeout | undefined
+  const limite = new Promise<never>((_, reject) => {
+    temporizador = setTimeout(() => reject(new Error(mensaje)), ms)
+  })
+  return Promise.race([promesa, limite]).finally(() => clearTimeout(temporizador))
 }

@@ -1,11 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk"
 import type {
-  MessageParam,
-  TextBlockParam,
-  Tool,
-  ToolResultBlockParam,
-  ToolUseBlockParam,
-} from "@anthropic-ai/sdk/resources/messages"
+  BetaMessageParam,
+  BetaTextBlockParam,
+  BetaTool,
+  BetaToolResultBlockParam,
+  BetaToolUseBlockParam,
+} from "@anthropic-ai/sdk/resources/beta/messages"
 import { z } from "zod"
 
 import type { AdaptadorLLM, HerramientaLLM, Mensaje, ParteMensaje, RespuestaLLM } from "./adapter.js"
@@ -21,9 +21,16 @@ export class AdaptadorAnthropic implements AdaptadorLLM {
   }
 
   async enviar(mensajes: Mensaje[], systemPrompt: string, herramientas: HerramientaLLM[]): Promise<RespuestaLLM> {
-    const respuesta = await this.cliente.messages.create({
+    // API beta solo por `fallbacks`: si el clasificador de seguridad declina el turno, el servidor
+    // lo reintenta en otro modelo dentro de la misma llamada en vez de dejar el chat sin respuesta.
+    const respuesta = await this.cliente.beta.messages.create({
       model: this.modelo,
-      max_tokens: 4096,
+      max_tokens: 16000,
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      // Caché automática del prefijo estable (herramientas + system prompt + historial): cada
+      // iteración del ciclo reenvía todo, así que solo se paga completo lo nuevo de cada vuelta.
+      cache_control: { type: "ephemeral" },
       system: systemPrompt,
       messages: mensajes.map(aMensajeAnthropic),
       tools: herramientas.map(aHerramientaAnthropic),
@@ -37,6 +44,10 @@ export class AdaptadorAnthropic implements AdaptadorLLM {
       } else if (bloque.type === "tool_use") {
         llamadasHerramientas.push({ id: bloque.id, nombre: bloque.name, argumentos: bloque.input })
       }
+    }
+
+    if (respuesta.stop_reason === "refusal" && !texto && llamadasHerramientas.length === 0) {
+      texto = "El modelo declinó responder esta solicitud. Reformúlala o continúa con otro mensaje del buzón."
     }
 
     return {
@@ -58,7 +69,7 @@ export class AdaptadorAnthropic implements AdaptadorLLM {
   }
 }
 
-function aHerramientaAnthropic(herramienta: HerramientaLLM): Tool {
+function aHerramientaAnthropic(herramienta: HerramientaLLM): BetaTool {
   const esquema = aJsonSchema(herramienta.esquema)
   return {
     name: herramienta.nombre,
@@ -67,24 +78,24 @@ function aHerramientaAnthropic(herramienta: HerramientaLLM): Tool {
   }
 }
 
-function aMensajeAnthropic(mensaje: Mensaje): MessageParam {
+function aMensajeAnthropic(mensaje: Mensaje): BetaMessageParam {
   return {
     role: mensaje.rol,
     content: mensaje.partes.map(aBloqueAnthropic),
   }
 }
 
-type BloqueContenidoAnthropic = TextBlockParam | ToolUseBlockParam | ToolResultBlockParam
+type BloqueContenidoAnthropic = BetaTextBlockParam | BetaToolUseBlockParam | BetaToolResultBlockParam
 
 function aBloqueAnthropic(parte: ParteMensaje): BloqueContenidoAnthropic {
   if (parte.tipo === "texto") {
     return { type: "text", text: parte.texto }
   }
   if (parte.tipo === "llamada_herramienta") {
-    const bloque: ToolUseBlockParam = { type: "tool_use", id: parte.id, name: parte.nombre, input: parte.argumentos }
+    const bloque: BetaToolUseBlockParam = { type: "tool_use", id: parte.id, name: parte.nombre, input: parte.argumentos }
     return bloque
   }
-  const resultado: ToolResultBlockParam = { type: "tool_result", tool_use_id: parte.id, content: parte.resultado }
+  const resultado: BetaToolResultBlockParam = { type: "tool_result", tool_use_id: parte.id, content: parte.resultado }
   return resultado
 }
 

@@ -25,9 +25,9 @@ Código, identificadores, comentarios y docs **en español** (`leerMaestro`, `re
 ## Estado
 
 - Hecho: plataforma (paso 1), helpers de `src/tools/lib/` (paso 2), las 5 herramientas P0 y
-  `demo.ts` (paso 3), `agent/prompt.md` y `src/knowledge/registro-contratos.md` (paso 4). La demo
-  reproduce la tabla §7.4 del PRD para los 6 mensajes.
-- Pendiente: ajustes del front, `README.md`, `SOLUCION.md` (11 secciones, incluida la regla de
+  `demo.ts` (paso 3), `agent/prompt.md` y `src/knowledge/registro-contratos.md` (paso 4), front y
+  endurecimiento del servidor (paso 5). La demo reproduce la tabla §7.4 del PRD para los 6 mensajes.
+- Pendiente: `README.md`, `SOLUCION.md` (11 secciones, incluida la regla de
   gobierno §7.5), despliegue, `modulo/`. `contratos_leer_pdf` (P1) no está implementada.
 
 ## Comandos
@@ -80,6 +80,18 @@ reiniciar al editarlos), **ejecución** en `src/tools/`.
 - Estado en disco: `out/sharepoint/maestro-contratos.csv` (copia del fixture, RN6, vía
   `inicializarMaestro`), `out/sharepoint/historial.jsonl`, `out/sharepoint/Contratos/<año>/<slug>/`,
   `out/procesados.json`, `out/alertas.md`. `fixtures/` es de solo lectura.
+- Servidor (`src/server.ts`): el timeout (`AGENT_LLM_TIMEOUT_MS`, 120 s) es **por llamada al
+  modelo** y vive en `loop.ts`; procesar el buzón encadena ~20 llamadas en un turno (~400k tokens),
+  por eso el tope por sesión es 1M y hay un tope global (`AGENT_MAX_TOKENS_TOTAL`). Una sesión
+  atiende un turno a la vez (`ocupada`). Sin CORS (mismo origen), cabeceras de seguridad con CSP
+  estricta (`style-src 'self'`: nada de estilos inline en el front) y `ACCESS_KEY` comparada en
+  tiempo constante.
+- Adaptador Anthropic: API beta solo por `fallbacks: "default"` (reintento en otro modelo si el
+  clasificador declina), `cache_control` automático y modelo por defecto `claude-opus-5-5`. Nunca
+  reenvía bloques `thinking` (los descarta todos de forma consistente, así no choca con la
+  verificación de historial editado).
+- Front: `web/src/Markdown.tsx` renderiza el Markdown del agente como elementos React (nunca
+  `dangerouslySetInnerHTML`): el texto puede citar correos de terceros.
 
 ## Decisiones de diseño de las herramientas (no obvias desde un solo archivo)
 

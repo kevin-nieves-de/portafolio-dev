@@ -1,7 +1,7 @@
+import { createHash, timingSafeEqual } from "node:crypto"
 import { promises as fs, existsSync } from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import cors from "cors"
 import "dotenv/config"
 import express from "express"
 import { z } from "zod"
@@ -16,18 +16,24 @@ const PROJECT_ROOT = path.resolve(__dirname, "..")
 
 const PORT = Number(process.env.PORT ?? 3002)
 const MAX_ITERACIONES = Number(process.env.AGENT_MAX_ITERATIONS ?? 25)
-const MAX_TOKENS_SESION = Number(process.env.AGENT_MAX_TOKENS_PER_SESSION ?? 200_000)
+const MAX_TOKENS_SESION = Number(process.env.AGENT_MAX_TOKENS_PER_SESSION ?? 1_000_000)
+/** Tope de todo el proceso: sin él, abrir sesiones nuevas esquivaría el tope por sesión. */
+const MAX_TOKENS_TOTAL = Number(process.env.AGENT_MAX_TOKENS_TOTAL ?? 10_000_000)
+const MAX_SESIONES = Number(process.env.AGENT_MAX_SESSIONS ?? 100)
 const ACCESS_KEY = process.env.ACCESS_KEY || null
-const TIMEOUT_LLM_MS = 60_000
+const TIMEOUT_LLM_MS = Number(process.env.AGENT_LLM_TIMEOUT_MS ?? 120_000)
 
 interface Sesion {
   historial: Mensaje[]
   tokensUsados: number
   creada: string
+  /** Un turno a la vez: dos turnos simultáneos intercalarían mensajes en el mismo historial. */
+  ocupada: boolean
 }
 
 const sesiones = new Map<string, Sesion>()
 const herramientas = construirRegistroHerramientas()
+let tokensTotales = 0
 
 let adaptadorCache: AdaptadorLLM | null = null
 /** Se crea al primer uso, no al arrancar el servidor, para que /api/health no exija la API key. */
@@ -51,20 +57,46 @@ async function obtenerSystemPrompt(): Promise<string> {
 function obtenerSesion(sessionId: string): Sesion {
   let sesion = sesiones.get(sessionId)
   if (!sesion) {
-    sesion = { historial: [], tokensUsados: 0, creada: new Date().toISOString() }
+    // Las sesiones viven en memoria: al llegar al tope se descarta la más antigua que esté libre.
+    if (sesiones.size >= MAX_SESIONES) {
+      const libre = [...sesiones.entries()].find(([, s]) => !s.ocupada)
+      if (libre) sesiones.delete(libre[0])
+    }
+    sesion = { historial: [], tokensUsados: 0, creada: new Date().toISOString(), ocupada: false }
     sesiones.set(sessionId, sesion)
   }
   return sesion
 }
 
+/** Compara en tiempo constante (sobre hashes de igual largo) para no filtrar la clave por tiempos. */
+function claveValida(recibida: string | undefined): boolean {
+  if (!ACCESS_KEY) return true
+  if (!recibida) return false
+  const hash = (texto: string): Buffer => createHash("sha256").update(texto).digest()
+  return timingSafeEqual(hash(recibida), hash(ACCESS_KEY))
+}
+
 const app = express()
-app.use(cors())
-app.use(express.json())
+app.disable("x-powered-by")
+app.use(express.json({ limit: "64kb" }))
+
+// El front se sirve desde este mismo origen (y en dev, vía el proxy de Vite), así que no se
+// habilita CORS: ningún otro sitio puede llamar a la API desde el navegador de un usuario.
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff")
+  res.setHeader("X-Frame-Options", "DENY")
+  res.setHeader("Referrer-Policy", "no-referrer")
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+  )
+  next()
+})
 
 // La clave de acceso (si se define) solo protege /api/*, nunca los estáticos del front.
 app.use((req, res, next) => {
   const esApiProtegida = req.path.startsWith("/api/") && req.path !== "/api/health"
-  if (!ACCESS_KEY || !esApiProtegida || req.header("x-access-key") === ACCESS_KEY) {
+  if (!esApiProtegida || claveValida(req.header("x-access-key"))) {
     next()
     return
   }
@@ -76,70 +108,76 @@ app.get("/api/health", (_req, res) => {
   const model =
     provider === "gemini"
       ? (process.env.GEMINI_MODEL ?? "gemini-2.5-flash")
-      : (process.env.ANTHROPIC_MODEL ?? "claude-opus-5")
-  res.json({ ok: true, provider, model })
+      : (process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5")
+  res.json({ ok: true, provider, model, accessKeyRequired: ACCESS_KEY !== null })
 })
 
+const sessionIdSchema = z.string().regex(/^[A-Za-z0-9_-]{8,64}$/, "sessionId inválido")
 const cuerpoChatSchema = z.object({
-  sessionId: z.string().min(1),
-  message: z.string().min(1),
+  sessionId: sessionIdSchema,
+  message: z.string().trim().min(1).max(4000),
 })
 
 app.post("/api/chat", async (req, res) => {
   const parseo = cuerpoChatSchema.safeParse(req.body)
   if (!parseo.success) {
-    res.status(400).json({ ok: false, error: "cuerpo inválido: se espera { sessionId, message }" })
+    res.status(400).json({ ok: false, error: "cuerpo inválido: se espera { sessionId, message } con un mensaje de hasta 4000 caracteres" })
     return
   }
   const { sessionId, message } = parseo.data
   const sesion = obtenerSesion(sessionId)
 
+  const respuestaCorta = (reply: string): void => {
+    res.json({ reply, toolCalls: [], needsConfirmation: false })
+  }
+  if (sesion.ocupada) {
+    respuestaCorta("Todavía estoy procesando tu mensaje anterior en esta sesión. Espera la respuesta antes de enviar otro.")
+    return
+  }
   if (sesion.tokensUsados >= MAX_TOKENS_SESION) {
-    res.json({
-      reply: "Esta sesión alcanzó el límite de tokens configurado (AGENT_MAX_TOKENS_PER_SESSION). Inicia una sesión nueva para continuar.",
-      toolCalls: [],
-      needsConfirmation: false,
-    })
+    respuestaCorta("Esta sesión alcanzó el límite de tokens configurado (AGENT_MAX_TOKENS_PER_SESSION). Inicia una sesión nueva para continuar.")
+    return
+  }
+  if (tokensTotales >= MAX_TOKENS_TOTAL) {
+    respuestaCorta("El servicio alcanzó el límite global de uso del modelo configurado (AGENT_MAX_TOKENS_TOTAL). Intenta más tarde.")
     return
   }
 
   // CA5: un error de herramienta o del proveedor LLM se muestra en el chat, la sesión no muere.
+  sesion.ocupada = true
   try {
     const adaptador = obtenerAdaptador()
     const systemPrompt = await obtenerSystemPrompt()
 
-    const resultado = await conTimeout(
-      ejecutarTurno(sesion.historial, message, {
-        directory: PROJECT_ROOT,
-        sessionId,
-        adaptador,
-        systemPrompt,
-        herramientas,
-        maxIteraciones: MAX_ITERACIONES,
-      }),
-      TIMEOUT_LLM_MS,
-      "El proveedor de modelo de lenguaje no respondió a tiempo",
-    )
+    const resultado = await ejecutarTurno(sesion.historial, message, {
+      directory: PROJECT_ROOT,
+      sessionId,
+      adaptador,
+      systemPrompt,
+      herramientas,
+      maxIteraciones: MAX_ITERACIONES,
+      timeoutLlmMs: TIMEOUT_LLM_MS,
+    })
 
     sesion.tokensUsados += resultado.tokensConsumidos
+    tokensTotales += resultado.tokensConsumidos
     res.json({ reply: resultado.reply, toolCalls: resultado.toolCalls, needsConfirmation: resultado.needsConfirmation })
   } catch (err) {
     const mensaje = err instanceof Error ? err.message : "error desconocido"
-    res.json({
-      reply: `No pude completar la solicitud: ${mensaje}. La sesión sigue activa, puedes intentar de nuevo.`,
-      toolCalls: [],
-      needsConfirmation: false,
-    })
+    respuestaCorta(`No pude completar la solicitud: ${mensaje}. La sesión sigue activa, puedes intentar de nuevo.`)
+  } finally {
+    sesion.ocupada = false
   }
 })
 
 app.get("/api/sessions/:id", (req, res) => {
-  const sesion = sesiones.get(req.params.id)
+  const id = sessionIdSchema.safeParse(req.params.id)
+  const sesion = id.success ? sesiones.get(id.data) : undefined
   if (!sesion) {
     res.status(404).json({ ok: false, error: "sesión no encontrada" })
     return
   }
-  res.json({ ok: true, data: sesion })
+  res.json({ ok: true, data: { historial: sesion.historial, tokensUsados: sesion.tokensUsados, creada: sesion.creada } })
 })
 
 // En producción (deploy o `npm start`) el mismo servicio sirve el front construido, así
@@ -151,15 +189,6 @@ if (existsSync(WEB_DIST)) {
     res.sendFile(path.join(WEB_DIST, "index.html"))
   })
   console.log(`[server] sirviendo front desde ${WEB_DIST}`)
-}
-
-function conTimeout<T>(promesa: Promise<T>, ms: number, mensaje: string): Promise<T> {
-  return Promise.race([
-    promesa,
-    new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error(mensaje)), ms)
-    }),
-  ])
 }
 
 app.listen(PORT, () => {
