@@ -28,13 +28,15 @@ Código, identificadores, comentarios y docs **en español** (`leerMaestro`, `re
   `demo.ts` (paso 3), `agent/prompt.md` y `src/knowledge/registro-contratos.md` (paso 4), front y
   endurecimiento del servidor (paso 5), `modulo/` (paso 8). La demo reproduce la tabla §7.4 del
   PRD para los 6 mensajes.
-- Pendiente: `README.md`, `SOLUCION.md` (11 secciones, incluida la regla de gobierno §7.5).
-  `render.yaml` está listo; el deploy lo hace el usuario desde su cuenta de Render. `contratos_leer_pdf` (P1) no se implementa a propósito.
+- Hecho también: `README.md` y `SOLUCION.md` (11 secciones; regla de gobierno en §6). Si cambias
+  arquitectura, decisiones, supuestos o costos, actualiza `SOLUCION.md`.
+- Pendiente (del usuario): desplegar con `render.yaml` desde su cuenta de Render y pegar el link en
+  `README.md`. `contratos_leer_pdf` (P1) no se implementa a propósito (SOLUCION.md, decisión 9).
 
 ## Comandos
 
 ```bash
-npm install && npm install --prefix web
+npm install              # el postinstall instala también web/
 npm run typecheck        # tsc --noEmit sobre src/, demo.ts, scripts/ y modulo/ (no incluye web/)
 npm run demo             # demo.ts: las 5 herramientas sobre el buzón, sin LLM; borra out/ al inicio
 npm run dev              # backend :3002 + front :5174
@@ -87,7 +89,7 @@ reiniciar al editarlos), **ejecución** en `src/tools/`.
   `inicializarMaestro`), `out/sharepoint/historial.jsonl`, `out/sharepoint/Contratos/<año>/<slug>/`,
   `out/procesados.json`, `out/alertas.md`. `fixtures/` es de solo lectura.
 - Servidor (`src/server.ts`): el timeout (`AGENT_LLM_TIMEOUT_MS`, 120 s) es **por llamada al
-  modelo** y vive en `loop.ts`; procesar el buzón encadena ~20 llamadas en un turno (~400k tokens),
+  modelo** y vive en `loop.ts`; procesar el buzón encadena ~16-20 llamadas en un turno (~200k tokens),
   por eso el tope por sesión es 1M y hay un tope global (`AGENT_MAX_TOKENS_TOTAL`). Una sesión
   atiende un turno a la vez (`ocupada`). Sin CORS (mismo origen), cabeceras de seguridad con CSP
   estricta (`style-src 'self'`: nada de estilos inline en el front) y `ACCESS_KEY` comparada en

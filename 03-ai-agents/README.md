@@ -8,7 +8,7 @@ Proyectos de agentes IA autonomos: sistemas capaces de razonar, planificar y usa
 
 | Proyecto | Tecnologias | Estado |
 |---------|-------------|--------|
-| [Agente de registro de contratos](agente-registro-contratos/) | TypeScript - Node.js - Express - React - zod - Anthropic / Gemini API | En desarrollo |
+| [Agente de registro de contratos](agente-registro-contratos/) | TypeScript - Node.js - Express - React - zod - Anthropic / Gemini API | Funcional (despliegue pendiente) |
 
 ---
 

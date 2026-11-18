@@ -11,10 +11,11 @@
     "web:dev": "npm run dev --prefix web",
     "web:build": "npm run build --prefix web",
     "dev": "concurrently -n server,web -c blue,green \"npm:server:dev\" \"npm:web:dev\"",
-    "build": "npm install --prefix web && npm run web:build",
+    "build": "npm run web:build",
     "start": "tsx src/server.ts",
     "typecheck": "tsc --noEmit",
-    "sync:modulo": "tsx scripts/sync-modulo.ts"
+    "sync:modulo": "tsx scripts/sync-modulo.ts",
+    "postinstall": "npm install --prefix web --no-audit --no-fund"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "1.4.0",
