@@ -290,7 +290,7 @@ clasifica, no calcula fechas y no escribe nada que no haya validado una herramie
 | RN1 – RN7 | Hecho | |
 | `demo.ts` | Hecho | 29 `ok`, 0 `x`; segunda pasada con `confirmado: true` para msg-006. |
 | `contratos_leer_pdf` (P1) | No hecho | Decisión 9. |
-| Link público | Hecho | https://agente-registro-contratos.onrender.com (Render, plan free, con el plan gratuito de Gemini). Probado: buzón completo y confirmación de msg-006. |
+| Link público | Parcial | `render.yaml` listo; el despliegue requiere la cuenta de Render y la API key del autor. |
 | Bonus `modulo/` | Hecho | Generado desde las mismas fuentes que usa la app. |
 
 **Qué falta para producción:**

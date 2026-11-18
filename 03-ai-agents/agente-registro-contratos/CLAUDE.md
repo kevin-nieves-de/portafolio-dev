@@ -30,9 +30,11 @@ Código, identificadores, comentarios y docs **en español** (`leerMaestro`, `re
   PRD para los 6 mensajes.
 - Hecho también: `README.md` y `SOLUCION.md` (11 secciones; regla de gobierno en §6). Si cambias
   arquitectura, decisiones, supuestos o costos, actualiza `SOLUCION.md`.
-- Desplegado en https://agente-registro-contratos.onrender.com (Render, servicio creado a mano con Root Directory; auto-deploy en cada push
-  a `main`). Proveedor: plan gratuito de Gemini, cuota compartida por todas las sesiones.
-  `contratos_leer_pdf` (P1) no se implementa a propósito (SOLUCION.md, decisión 9).
+- Despliegue en Render en curso (servicio creado a mano con Root Directory; auto-deploy en cada
+  push a `main`; proveedor: plan gratuito de Gemini). OJO: `agente-registro-contratos.onrender.com`
+  es un servicio AJENO con el mismo nombre; la URL propia lleva sufijo y se confirma con
+  `/api/health` (debe decir `"provider":"gemini"`). `contratos_leer_pdf` (P1) no se implementa a
+  propósito (SOLUCION.md, decisión 9).
 
 ## Comandos
 
