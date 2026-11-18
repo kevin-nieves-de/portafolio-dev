@@ -30,10 +30,12 @@ Código, identificadores, comentarios y docs **en español** (`leerMaestro`, `re
   PRD para los 6 mensajes.
 - Hecho también: `README.md` y `SOLUCION.md` (11 secciones; regla de gobierno en §6). Si cambias
   arquitectura, decisiones, supuestos o costos, actualiza `SOLUCION.md`.
-- Despliegue en Render en curso (servicio creado a mano con Root Directory; auto-deploy en cada
-  push a `main`; proveedor: plan gratuito de Gemini). OJO: `agente-registro-contratos.onrender.com`
-  es un servicio AJENO con el mismo nombre; la URL propia lleva sufijo y se confirma con
-  `/api/health` (debe decir `"provider":"gemini"`). `contratos_leer_pdf` (P1) no se implementa a
+- Desplegado en https://agente-registro-contratos-h3mt.onrender.com (Render; servicio creado a mano con Root Directory; auto-deploy en cada
+  push a `main`, que reinicia el servicio y borra las sesiones; proveedor: plan gratuito de Gemini).
+  OJO: `agente-registro-contratos.onrender.com` (sin sufijo) es un servicio AJENO.
+- Gemini no acepta `type: [..., "null"]` ni `anyOf` con `{type: "null"}`: `limpiarEsquema`
+  (`src/llm/gemini.ts`) los convierte a `nullable: true` y deja solo claves del Schema de Gemini.
+  `demo.ts` no lo cubre (no llama al modelo): tras cambiar `contratoSchema`, probar el chat con Gemini. `contratos_leer_pdf` (P1) no se implementa a
   propósito (SOLUCION.md, decisión 9).
 
 ## Comandos

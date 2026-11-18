@@ -161,20 +161,73 @@ function aFunctionDeclaration(herramienta: HerramientaLLM): Record<string, unkno
   }
 }
 
-/** Gemini acepta un subconjunto de OpenAPI 3.0: quita las claves que `z.toJSONSchema` agrega y que la API rechaza. */
-function limpiarEsquema(nodo: unknown): unknown {
+/**
+ * Palabras clave del `Schema` de Gemini (subconjunto de OpenAPI 3.0) que se conservan. Todo lo demás
+ * (`$schema`, `additionalProperties`, `pattern`, `minLength`…) se descarta: no hace falta para que el
+ * modelo entienda los argumentos, y la validación estricta la hace zod en el servidor antes de
+ * ejecutar cualquier herramienta (src/agent/loop.ts).
+ */
+const CLAVES_GEMINI = new Set([
+  "type",
+  "format",
+  "description",
+  "nullable",
+  "enum",
+  "properties",
+  "required",
+  "items",
+  "minItems",
+  "maxItems",
+  "minimum",
+  "maximum",
+  "anyOf",
+])
+
+type NodoEsquema = Record<string, unknown>
+
+function esObjeto(valor: unknown): valor is NodoEsquema {
+  return valor !== null && typeof valor === "object" && !Array.isArray(valor)
+}
+
+/**
+ * Convierte el JSON Schema de `z.toJSONSchema` al formato de Gemini. La diferencia que rompe la API:
+ * JSON Schema expresa "puede ser null" con `type: ["string", "null"]` o `anyOf: [{…}, {type: "null"}]`,
+ * y Gemini no admite `type` como lista ni el tipo "null": usa un solo `type` más `nullable: true`.
+ */
+export function limpiarEsquema(nodo: unknown): unknown {
   if (Array.isArray(nodo)) return nodo.map(limpiarEsquema)
-  if (nodo !== null && typeof nodo === "object") {
-    const salida: Record<string, unknown> = {}
-    for (const [clave, valor] of Object.entries(nodo)) {
-      if (clave === "$schema" || clave === "additionalProperties" || clave === "$defs" || clave === "definitions") {
-        continue
-      }
+  if (!esObjeto(nodo)) return nodo
+
+  let fuente: NodoEsquema = nodo
+  let nullable = false
+
+  if (Array.isArray(fuente.type)) {
+    const tipos = fuente.type.filter((t) => t !== "null")
+    nullable = tipos.length < fuente.type.length
+    fuente = { ...fuente, type: tipos.length === 1 ? tipos[0] : undefined }
+    if (tipos.length > 1) fuente.anyOf = tipos.map((t) => ({ type: t }))
+  }
+
+  if (Array.isArray(fuente.anyOf)) {
+    const opciones = fuente.anyOf.filter((o) => !(esObjeto(o) && o.type === "null"))
+    nullable ||= opciones.length < fuente.anyOf.length
+    const { anyOf: _descartado, ...resto } = fuente
+    fuente = opciones.length === 1 && esObjeto(opciones[0]) ? { ...opciones[0], ...resto } : { ...resto, anyOf: opciones }
+  }
+
+  const salida: NodoEsquema = {}
+  for (const [clave, valor] of Object.entries(fuente)) {
+    if (!CLAVES_GEMINI.has(clave) || valor === undefined) continue
+    if (clave === "properties" && esObjeto(valor)) {
+      salida.properties = Object.fromEntries(Object.entries(valor).map(([k, v]) => [k, limpiarEsquema(v)]))
+    } else if (clave === "format" && valor !== "date-time" && valor !== "enum") {
+      continue
+    } else {
       salida[clave] = limpiarEsquema(valor)
     }
-    return salida
   }
-  return nodo
+  if (nullable) salida.nullable = true
+  return salida
 }
 
 function aContenidoGemini(mensaje: Mensaje): ContenidoGemini {
