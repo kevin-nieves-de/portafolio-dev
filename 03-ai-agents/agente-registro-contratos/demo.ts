@@ -115,7 +115,7 @@ async function main(): Promise<void> {
 
   linea("\n=== 3. Segunda pasada: el usuario confirma los campos en revisión ===")
   for (const [mensajeId, contrato] of pendientes) {
-    linea(`\n${mensajeId} — usuario: "confirmo el valor ${contrato.valor.valor} y la fecha fin ${contrato.fecha_fin.valor}"`)
+    linea(`\n${mensajeId} — usuario: "confirmo el valor ${contrato.valor.valor}, la fecha inicio ${contrato.fecha_inicio.valor} y la fecha fin ${contrato.fecha_fin.valor}"`)
     const r = await invocar<ResultadoRegistro>("contratos_registrar", { mensaje_id: mensajeId, contrato, confirmado: true })
     if (r.ok) ok(`acción: ${r.data.accion} ${r.data.id_contrato}, póliza ${r.data.estado_poliza}, archivado en ${r.data.ruta_archivo}`)
     else x(r.error)

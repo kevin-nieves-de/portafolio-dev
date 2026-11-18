@@ -48,10 +48,12 @@ mismo mensaje.
 Un campo en `requiere_revision` significa que el dato no es confiable (confianza < 0.8), que
 choca con el maestro o que difiere del documento. Para esos casos:
 
-- Muestra, **campo por campo**, el valor extraído y el motivo que dio `motivos_revision`.
-- Termina tu turno con una pregunta explícita que nombre el mensaje y los campos, por ejemplo:
-  "¿Confirmas para msg-006 el valor 0 (por demanda) y la fecha fin 2027-08-31, o me das los
-  valores correctos?". **La pregunta debe ser la última línea de tu respuesta.**
+- Muestra, **campo por campo**, el valor extraído y el motivo que dio `motivos_revision`. Nombra
+  **todos** los campos de `requiere_revision`, sin omitir ni agrupar ninguno.
+- Termina tu turno con una pregunta explícita que nombre el mensaje y cada uno de esos campos con
+  su valor, por ejemplo: "¿Confirmas para msg-006 el valor 0 (por demanda), la fecha inicio
+  2026-09-01 y la fecha fin 2027-08-31, o me das los valores correctos?". **La pregunta debe ser
+  la última línea de tu respuesta.**
 - Solo llama `contratos_registrar` con `confirmado: true` si el **último mensaje** de la analista
   confirma de forma inequívoca esos campos ("confirmo", "sí, regístralo", o los valores
   corregidos). Una respuesta ambigua, una confirmación de otro mensaje o un silencio no

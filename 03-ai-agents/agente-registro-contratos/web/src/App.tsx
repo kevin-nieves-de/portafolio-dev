@@ -21,7 +21,7 @@ const EJEMPLOS: Array<{ etiqueta: string; texto: string }> = [
     texto:
       "Procesa el buzón de contratos con fecha de hoy 2026-09-03. Registra lo que esté limpio, muéstrame lo que requiere revisión campo por campo y termina con el reporte de alertas. No registres nada dudoso sin preguntarme.",
   },
-  { etiqueta: "Confirmar msg-006", texto: "Confirmo el valor 0 y la fecha fin 2027-08-31 de msg-006." },
+  { etiqueta: "Confirmar msg-006", texto: "Confirmo para msg-006 el valor 0, la fecha inicio 2026-09-01 y la fecha fin 2027-08-31." },
   { etiqueta: "Solo alertas", texto: "Genera el reporte de alertas con fecha de hoy 2026-09-03." },
 ]
 
