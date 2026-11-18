@@ -14,6 +14,6 @@
     "outDir": "dist",
     "types": ["node"]
   },
-  "include": ["src", "demo.ts", "scripts"],
-  "exclude": ["node_modules", "web", "out", "dist", "modulo"]
+  "include": ["src", "demo.ts", "scripts", "modulo"],
+  "exclude": ["node_modules", "web", "out", "dist"]
 }

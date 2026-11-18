@@ -26,19 +26,25 @@ Código, identificadores, comentarios y docs **en español** (`leerMaestro`, `re
 
 - Hecho: plataforma (paso 1), helpers de `src/tools/lib/` (paso 2), las 5 herramientas P0 y
   `demo.ts` (paso 3), `agent/prompt.md` y `src/knowledge/registro-contratos.md` (paso 4), front y
-  endurecimiento del servidor (paso 5). La demo reproduce la tabla §7.4 del PRD para los 6 mensajes.
-- Pendiente: `README.md`, `SOLUCION.md` (11 secciones, incluida la regla de
-  gobierno §7.5), despliegue, `modulo/`. `contratos_leer_pdf` (P1) no está implementada.
+  endurecimiento del servidor (paso 5), `modulo/` (paso 8). La demo reproduce la tabla §7.4 del
+  PRD para los 6 mensajes.
+- Pendiente: `README.md`, `SOLUCION.md` (11 secciones, incluida la regla de gobierno §7.5),
+  despliegue. `contratos_leer_pdf` (P1) no se implementa a propósito.
 
 ## Comandos
 
 ```bash
 npm install && npm install --prefix web
-npm run typecheck        # tsc --noEmit sobre src/, demo.ts y scripts/ (no incluye web/)
+npm run typecheck        # tsc --noEmit sobre src/, demo.ts, scripts/ y modulo/ (no incluye web/)
 npm run demo             # demo.ts: las 5 herramientas sobre el buzón, sin LLM; borra out/ al inicio
 npm run dev              # backend :3002 + front :5174
 npm run sync:modulo      # regenera modulo/agent.md y SKILL.md desde prompt.md y knowledge/
+npm run sync:modulo -- --check   # falla si modulo/ quedó desactualizado
 ```
+
+`modulo/agent.md` y `modulo/skill/registro-contratos/SKILL.md` **se generan**: tras editar
+`agent/prompt.md` o el conocimiento, corre `sync:modulo` en el mismo commit. `modulo/tools/contratos.ts`
+es un reexport fijo de `src/tools/contratos.ts` (no un symlink ni una copia).
 
 No hay framework de test: la verificación es `typecheck` + `demo`. `demo.ts` invoca las
 herramientas por el mismo registro y la misma validación zod que `loop.ts`, e imprime `ok`/`x`;
