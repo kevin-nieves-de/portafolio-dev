@@ -14,6 +14,12 @@ planteamiento completo de la solución está en [`SOLUCION.md`](SOLUCION.md).
 | **Clave de acceso** | No se requiere: el gasto se limita con topes de tokens por sesión y globales. |
 | **Stack** | TypeScript · Node 20+ · Express · React + Vite · zod · Anthropic (o Gemini) |
 
+> **Si el chat responde "Gemini alcanzó el límite de solicitudes…":** el link usa el plan gratuito
+> de Gemini, que limita las solicitudes por minuto y por día. Espera un minuto y escribe
+> `continúa`; el agente retoma donde quedó. Si el mensaje persiste, se agotó la cuota del día (se
+> renueva a la medianoche, hora del Pacífico). El flujo completo también se puede ver sin modelo ni
+> API key con `npm install && npm run demo` (ver [Demo sin modelo de lenguaje](#demo-sin-modelo-de-lenguaje)).
+
 ## Levantar en local
 
 Requisitos: Node 20 o superior y una API key de Anthropic (o de Google Gemini).
