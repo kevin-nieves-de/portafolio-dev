@@ -30,8 +30,9 @@ Código, identificadores, comentarios y docs **en español** (`leerMaestro`, `re
   PRD para los 6 mensajes.
 - Hecho también: `README.md` y `SOLUCION.md` (11 secciones; regla de gobierno en §6). Si cambias
   arquitectura, decisiones, supuestos o costos, actualiza `SOLUCION.md`.
-- Pendiente (del usuario): desplegar con `render.yaml` desde su cuenta de Render y pegar el link en
-  `README.md`. `contratos_leer_pdf` (P1) no se implementa a propósito (SOLUCION.md, decisión 9).
+- Desplegado en https://agente-registro-contratos.onrender.com (Render, servicio creado a mano con Root Directory; auto-deploy en cada push
+  a `main`). Proveedor: plan gratuito de Gemini, cuota compartida por todas las sesiones.
+  `contratos_leer_pdf` (P1) no se implementa a propósito (SOLUCION.md, decisión 9).
 
 ## Comandos
 

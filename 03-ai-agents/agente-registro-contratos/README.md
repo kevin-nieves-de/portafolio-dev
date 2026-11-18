@@ -10,7 +10,7 @@ planteamiento completo de la solución está en [`SOLUCION.md`](SOLUCION.md).
 
 | | |
 |---|---|
-| **Link de prueba** | _se publica al desplegar en Render (ver [Despliegue](#despliegue))_ |
+| **Link de prueba** | [agente-registro-contratos.onrender.com](https://agente-registro-contratos.onrender.com) — plan free de Render: la primera visita tras 15 min sin uso tarda ~1 min |
 | **Clave de acceso** | No se requiere: el gasto se limita con topes de tokens por sesión y globales. |
 | **Stack** | TypeScript · Node 20+ · Express · React + Vite · zod · Anthropic (o Gemini) |
 

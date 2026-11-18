@@ -9,7 +9,8 @@ export function Markdown({ texto }: { texto: string }) {
   return <div className="markdown">{bloques(texto.replace(/\r\n/g, "\n").split("\n"))}</div>
 }
 
-const TABLA = /^\s*\|.*\|\s*$/
+/** Fila de tabla GFM: con o sin barras en los extremos ("| a | b |" o "a | b"). */
+const TABLA = /\|/
 const SEPARADOR_TABLA = /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$/
 const VINETA = /^\s*[-*]\s+(.*)$/
 const NUMERADA = /^\s*\d+[.)]\s+(.*)$/
@@ -32,7 +33,9 @@ function bloques(lineas: string[]): ReactNode[] {
     } else if (TABLA.test(linea) && SEPARADOR_TABLA.test(lineas[i + 1] ?? "")) {
       const filas: string[][] = [celdas(linea)]
       i += 2
-      while (i < lineas.length && TABLA.test(lineas[i] ?? "")) filas.push(celdas(lineas[i++] ?? ""))
+      while (i < lineas.length && (lineas[i] ?? "").trim() !== "" && TABLA.test(lineas[i] ?? "")) {
+        filas.push(celdas(lineas[i++] ?? ""))
+      }
       salida.push(tabla(filas, salida.length))
     } else if (TITULO.test(linea)) {
       const [, , contenido = ""] = TITULO.exec(linea) ?? []

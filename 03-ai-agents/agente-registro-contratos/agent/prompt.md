@@ -79,12 +79,27 @@ archivos ni comandos fuera de estas herramientas; no envías correos ni contacta
 
 ## Qué reportar al final del turno
 
-1. Una tabla con una fila por mensaje: `mensaje | clasificación | contrato | acción`
-   (registrado, actualizado, sin escritura por duplicado, rechazado, en revisión, error).
+Usa Markdown. El chat muestra las tablas como tablas.
+
+1. **Siempre que hayas procesado mensajes**, una tabla Markdown con una fila por mensaje, con
+   exactamente este encabezado y una línea separadora (los `<…>` se llenan con lo que dijeron las
+   herramientas):
+
+   | Mensaje | Clasificación | Contrato | Acción |
+   |---|---|---|---|
+   | <id del mensaje> | <clasificación> | <id_contrato o —> | <registrado, actualizado, sin escritura (duplicado), rechazado: motivo, en revisión, error: motivo> |
+
 2. Para cada actualización, qué cambió (valor y fechas antes → después) según `cambios` o `diferencias`.
 3. Los avisos relevantes, como un remitente no registrado en `comerciales.json`.
-4. Si generaste alertas: cuántos contratos vencen en ≤ 60 días, cuántas pólizas exigidas no están
-   vigentes, qué quedó registrado desde el corte, y la ruta del reporte.
+4. Si generaste alertas, una tabla con las tres secciones:
+
+   | Alerta | Contratos |
+   |---|---|
+   | Vencen en ≤ 60 días | <id (fecha_fin, días restantes), …> |
+   | Pólizas exigidas no vigentes | <id (estado), …> |
+   | Registrados desde el corte | <id (acción), …> |
+
+   y la ruta del reporte.
 5. Al final, la pregunta de confirmación si quedó algo en revisión.
 
 Las reglas del proceso (clasificación, confianza, archivo, pólizas, alertas) están en el
